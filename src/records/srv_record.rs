@@ -53,7 +53,7 @@ impl IntoIterator for SrvRecord {
     }
 }
 
-#[cfg(feature = "test-utils")]
+#[cfg(feature = "testing-utils")]
 impl testing_utils::Randomize for SrvDomain {
     fn random() -> Self {
         use testing_utils::Randomize;
@@ -66,7 +66,7 @@ impl testing_utils::Randomize for SrvDomain {
     }
 }
 
-#[cfg(feature = "test-utils")]
+#[cfg(feature = "testing-utils")]
 impl testing_utils::Randomize for SrvEntry {
     fn random() -> Self {
         use testing_utils::Randomize;

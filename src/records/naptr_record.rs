@@ -152,7 +152,7 @@ impl TryFrom<&[u8]> for NaptrServices {
     }
 }
 
-#[cfg(feature = "test-utils")]
+#[cfg(feature = "testing-utils")]
 impl testing_utils::Randomize for NaptrEntry {
     fn random() -> Self {
         let services = testing_utils::sample(&[

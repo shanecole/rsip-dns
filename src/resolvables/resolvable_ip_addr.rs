@@ -34,7 +34,7 @@ impl ResolvableIpAddr {
     }
 }
 
-#[cfg(all(test, feature = "hickory-dns", feature = "test-utils"))]
+#[cfg(all(test, feature = "hickory-dns"))]
 mod tests {
     #[tokio::test]
     async fn resolves() {
