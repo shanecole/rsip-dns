@@ -222,13 +222,13 @@ pub use records::SrvDomain;
 pub use resolvables::ResolvableExt;
 pub use target::Target;
 
-#[cfg(feature = "trust-dns")]
+#[cfg(feature = "hickory-dns")]
 mod trust_dns;
-#[cfg(feature = "trust-dns")]
+#[cfg(feature = "hickory-dns")]
+pub use hickory_proto;
+#[cfg(feature = "hickory-dns")]
+pub use hickory_resolver;
+#[cfg(feature = "hickory-dns")]
 pub use trust_dns::AsyncTrustDnsClient;
-#[cfg(feature = "trust-dns")]
+#[cfg(feature = "hickory-dns")]
 pub use trust_dns::TrustDnsClient;
-#[cfg(feature = "trust-dns")]
-pub use trust_dns_proto;
-#[cfg(feature = "trust-dns")]
-pub use trust_dns_resolver;

@@ -1,10 +1,10 @@
 //! This module holds [DnsClient](crate::DnsClient) trait implementations on top of
-//! [trust-dns](https://docs.rs/trust-dns-resolver/0.20.3/trust_dns_resolver/).
+//! [hickory-dns](https://docs.rs/hickory-resolver/0.25.2/hickory_resolver/).
 //!
 //! 2 clients are provided, one async built on top of
-//! [AsyncResolver](https://docs.rs/trust-dns-resolver/0.20.3/trust_dns_resolver/struct.AsyncResolver.html)
-//! of `trust-dns` and one sync built on top of [Resolver](https://docs.rs/trust-dns-resolver/0.20.3/trust_dns_resolver/struct.Resolver.html)
-//! of trust-dns. Each variant accepts the respective `trust-dns` resolver, so you get enormous
+//! [TokioAsyncResolver](https://docs.rs/hickory-resolver/0.25.2/hickory_resolver/type.TokioAsyncResolver.html)
+//! of `hickory-dns` and one sync built on top of [Resolver](https://docs.rs/hickory-resolver/0.25.2/hickory_resolver/struct.Resolver.html)
+//! of hickory-dns. Each variant accepts the respective `hickory-dns` resolver, so you get enormous
 //! freedom and `rsip-dns` shouldn't restrict you in any way.
 //!
 //! In more advanced scenarios, you might want to build a custom dns client that will implement
@@ -19,7 +19,7 @@ pub use trust_dns_client::TrustDnsClient;
 use std::convert::{TryFrom, TryInto};
 
 use crate::records::*;
-use trust_dns_proto::rr::{rdata::srv::SRV, record_data::RData};
+use hickory_proto::rr::{rdata::srv::SRV, record_data::RData};
 
 use rsip::Error;
 
