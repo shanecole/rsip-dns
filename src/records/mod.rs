@@ -83,20 +83,27 @@ impl TryFrom<&str> for SrvDomain {
     fn try_from(from: &str) -> Result<Self, Self::Error> {
         use nom::{
             bytes::complete::{tag, take_until},
-            error::VerboseError,
-            sequence::tuple,
+            Parser,
         };
         use std::convert::TryInto;
 
-        let (rem, (_, scheme, _)) =
-            tuple::<_, _, VerboseError<&str>, _>((tag("_"), take_until("."), tag(".")))(from)
-                .map_err(|_| Error::tokenizer(("SrvDomain scheme", from)))?;
+        let (rem, (_, scheme, _)) = (
+            tag::<_, _, nom::error::Error<&str>>("_"),
+            take_until::<_, _, nom::error::Error<&str>>("."),
+            tag::<_, _, nom::error::Error<&str>>("."),
+        )
+            .parse(from)
+            .map_err(|_| Error::tokenizer(("SrvDomain scheme", from)))?;
         let scheme: rsip::Scheme =
             rsip::common::uri::scheme::Tokenizer::from(scheme.as_bytes()).try_into()?;
 
-        let (domain, (_, transport, _)) =
-            tuple::<_, _, VerboseError<&str>, _>((tag("_"), take_until("."), tag(".")))(rem)
-                .map_err(|_| Error::tokenizer(("SrvDomain transport", from)))?;
+        let (domain, (_, transport, _)) = (
+            tag::<_, _, nom::error::Error<&str>>("_"),
+            take_until::<_, _, nom::error::Error<&str>>("."),
+            tag::<_, _, nom::error::Error<&str>>("."),
+        )
+            .parse(rem)
+            .map_err(|_| Error::tokenizer(("SrvDomain transport", from)))?;
         let transport: rsip::Transport =
             rsip::common::transport::Tokenizer::from(transport.as_bytes()).try_into()?;
 
