@@ -162,21 +162,21 @@
 //! ##### 1. IP address
 //! In this case an IP address is given, regardless if a port/transport are available.
 //!  * if transport is given, then it should be used otherwise the default transport SIP scheme
-//!  is used (if it's sip, then TLS, otherwise UDP)
+//!    is used (if it's sip, then TLS, otherwise UDP)
 //!  * if port is given, then it should be used, otherwise the default port fot the resolved
-//!  transport should be used
+//!    transport should be used
 //!  * use (given ip, given or default port, given or default transport)
 //!
 //! ##### 2. Domain with Port
 //! In this case the target is a domain and also a port is given.
 //!  * if transport is given as well, then it should be used otherwise the default transport SIP scheme
-//!  is used (if it's sip, then TLS, otherwise UDP)
+//!    is used (if it's sip, then TLS, otherwise UDP)
 //!  * **perform** an A or AAAA record lookup for the domain to get the IPs
 //!      * for each ip addr found use (resolved ip, given port, given or default transport)
 //!
 //! ##### 3. Domain with Transport
 //!  * **perform** a SRV lookup for the supported transport (should take into account sips or sip
-//!  scheme here as well)
+//!    scheme here as well)
 //!      * for each SRV result, **perform** an A or AAAA
 //!          * for each address record found, use (ip, srv port, given transport)
 //!  * if no SRV records are found **perform** an A or AAAA and to get the ip addrs
@@ -186,11 +186,11 @@
 //!  * **perform** a NAPTR query to get all replacemenets domains
 //!      * for each replacement domain, **perform** a SRV lookup
 //!          * filter SRV results based on transports that are supported and then sort based on
-//!          priority/weight
+//!            priority/weight
 //!          * for each SRV result, **perform** an A or AAAA
 //!              * for each address record found, use (ip, srv port, srv transport)
 //!  * if no NAPTRs found, build and **perform** SRV lookup for each transport supported (with & without sips if secure is
-//!  supported in context & given transport)
+//!    supported in context & given transport)
 //!     * for each SRV result, **perform** an A or AAAA
 //!         * for each address record found, use (ip, srv port, srv transport)
 //!  * if no SRV records are found

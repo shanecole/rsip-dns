@@ -45,7 +45,7 @@ impl DnsClient for AsyncHickoryClient {
             .lookup_ip(domain.to_string())
             .await
             .map(|r| {
-                let ip_addrs = r.into_iter().map(Into::into).collect::<Vec<IpAddr>>();
+                let ip_addrs = r.into_iter().collect::<Vec<IpAddr>>();
                 AddrRecord { domain, ip_addrs }
             })
             .map_err(|e| Error::Unexpected(e.to_string()))

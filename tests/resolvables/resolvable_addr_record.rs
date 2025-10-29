@@ -24,7 +24,7 @@ async fn resolves_correctly() {
     assert_eq!(
         resolvable.resolve_next().await,
         dns_client.a_record.clone().unwrap().ip_addrs.first().map(|ip_addr| Target {
-            ip_addr: ip_addr.clone(),
+            ip_addr: *ip_addr,
             port,
             transport
         })
@@ -32,7 +32,7 @@ async fn resolves_correctly() {
     assert_eq!(
         resolvable.resolve_next().await,
         dns_client.a_record.clone().unwrap().ip_addrs.last().map(|ip_addr| Target {
-            ip_addr: ip_addr.clone(),
+            ip_addr: *ip_addr,
             port,
             transport
         })

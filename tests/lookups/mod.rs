@@ -70,7 +70,7 @@ fn naptr_records_from_naptr_map(naptr_map: NaptrMap) -> NaptrRecords {
         naptr_records.insert(
             domain.clone(),
             NaptrRecord {
-                domain: domain,
+                domain,
                 entries: domains
                     .into_iter()
                     .map(|tuple| NaptrEntry {
@@ -151,11 +151,11 @@ impl std::fmt::Debug for CustomDnsClient {
     }
 }
 
-impl Into<Option<NaptrRecords>> for NaptrConfig {
-    fn into(self) -> Option<NaptrRecords> {
-        match self {
-            Self::Panic => None,
-            Self::Map(map) => Some(naptr_records_from_naptr_map(map)),
+impl From<NaptrConfig> for Option<NaptrRecords> {
+    fn from(val: NaptrConfig) -> Self {
+        match val {
+            NaptrConfig::Panic => None,
+            NaptrConfig::Map(map) => Some(naptr_records_from_naptr_map(map)),
         }
     }
 }
@@ -165,11 +165,11 @@ impl From<NaptrMap> for NaptrConfig {
     }
 }
 
-impl Into<Option<SrvRecords>> for SrvConfig {
-    fn into(self) -> Option<SrvRecords> {
-        match self {
-            Self::Panic => None,
-            Self::Map(map) => Some(srv_records_from_srv_map(map)),
+impl From<SrvConfig> for Option<SrvRecords> {
+    fn from(val: SrvConfig) -> Self {
+        match val {
+            SrvConfig::Panic => None,
+            SrvConfig::Map(map) => Some(srv_records_from_srv_map(map)),
         }
     }
 }
@@ -179,11 +179,11 @@ impl From<SrvMap> for SrvConfig {
     }
 }
 
-impl Into<Option<ARecords>> for AConfig {
-    fn into(self) -> Option<ARecords> {
-        match self {
-            Self::Panic => None,
-            Self::Map(map) => Some(map),
+impl From<AConfig> for Option<ARecords> {
+    fn from(val: AConfig) -> Self {
+        match val {
+            AConfig::Panic => None,
+            AConfig::Map(map) => Some(map),
         }
     }
 }
