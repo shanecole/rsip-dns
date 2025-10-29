@@ -5,7 +5,7 @@ use rsip::{Domain, Error};
 /// This trait needs to be implemented by any dns client used inside the [Context](super::Context).
 /// rsip-dns provides a default implementation on top of [hickory-dns](https://docs.rs/hickory-resolver/0.25.2/hickory_resolver/)
 /// behind the `hickory-dns` feature flag. For more information take a look in the
-/// `trust_dns` module.
+/// `hickory_dns` module.
 ///
 /// Note that whether [DnsClient::ip_lookup] queries for an A or an AAAA or both records is up
 /// to the DNS client used.

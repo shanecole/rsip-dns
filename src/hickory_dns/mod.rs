@@ -10,11 +10,11 @@
 //! In more advanced scenarios, you might want to build a custom dns client that will implement
 //! query caching etc.
 
-mod async_trust_dns_client;
-mod trust_dns_client;
+mod async_hickory_client;
+mod hickory_client;
 
-pub use async_trust_dns_client::AsyncTrustDnsClient;
-pub use trust_dns_client::TrustDnsClient;
+pub use async_hickory_client::AsyncHickoryClient;
+pub use hickory_client::HickoryClient;
 
 use std::convert::{TryFrom, TryInto};
 

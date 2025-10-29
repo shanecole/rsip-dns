@@ -11,18 +11,18 @@ use rsip::{Domain, Error};
 /// [Resolver](https://docs.rs/hickory-resolver/0.25.2/hickory_resolver/struct.Resolver.html)
 /// as an argument, hence refer to `hickory-dns` manual for all the configuration.
 #[derive(Clone)]
-pub struct TrustDnsClient {
+pub struct HickoryClient {
     resolver: Arc<Resolver<GenericConnector<TokioRuntimeProvider>>>,
 }
 
-impl TrustDnsClient {
+impl HickoryClient {
     pub fn new(resolver: Resolver<GenericConnector<TokioRuntimeProvider>>) -> Self {
         Self { resolver: Arc::new(resolver) }
     }
 }
 
 #[async_trait]
-impl DnsClient for TrustDnsClient {
+impl DnsClient for HickoryClient {
     async fn naptr_lookup(&self, domain: Domain) -> Option<NaptrRecord> {
         self.resolver.lookup(domain.to_string(), RecordType::NAPTR).await.ok().map(|r| {
             let entries = r

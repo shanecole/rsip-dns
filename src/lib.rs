@@ -223,12 +223,12 @@ pub use resolvables::ResolvableExt;
 pub use target::Target;
 
 #[cfg(feature = "hickory-dns")]
-mod trust_dns;
+mod hickory_dns;
+#[cfg(feature = "hickory-dns")]
+pub use hickory_dns::AsyncHickoryClient;
+#[cfg(feature = "hickory-dns")]
+pub use hickory_dns::HickoryClient;
 #[cfg(feature = "hickory-dns")]
 pub use hickory_proto;
 #[cfg(feature = "hickory-dns")]
 pub use hickory_resolver;
-#[cfg(feature = "hickory-dns")]
-pub use trust_dns::AsyncTrustDnsClient;
-#[cfg(feature = "hickory-dns")]
-pub use trust_dns::TrustDnsClient;
