@@ -10,8 +10,6 @@ keywords = ["sip", "3263", "dns", "voip", "srv"]
 categories = ["parser-implementations", "parsing", "network-programming"]
 license-file = "LICENSE"
 
-[workspace]
-
 [dependencies]
 rsip = { version = "0.4.0" }
 async-trait = { version = "0.1.89" }
