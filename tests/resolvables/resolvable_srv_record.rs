@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use rsip::{Domain, Error};
-use rsip_dns::{records::*, resolvables::*, DnsClient};
+use rsip_dns::{DnsClient, records::*, resolvables::*};
 use std::{collections::HashMap, net::IpAddr};
 
 #[tokio::test]
@@ -57,7 +57,11 @@ impl DnsClient for CustomMockedDnsClient {
         Some(SRV_RECORD.clone())
     }
     async fn ip_lookup(&self, domain: Domain) -> Result<AddrRecord, Error> {
-        Ok(AddrRecord { ip_addrs: IP_ADDRS.get(&domain.to_string()).unwrap().clone(), domain })
+        Ok(AddrRecord {
+            ip_addrs: IP_ADDRS.get(&domain.to_string()).unwrap().clone(),
+            domain,
+            ttl: 300,
+        })
     }
 }
 
@@ -80,6 +84,7 @@ static SRV_RECORD: Lazy<SrvRecord> = Lazy::new(|| {
             },
         ],
         domain: Randomize::random(),
+        ttl: 300,
     }
 });
 

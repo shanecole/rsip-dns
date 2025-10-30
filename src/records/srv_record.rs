@@ -6,6 +6,7 @@ use rsip::{Domain, Port, Transport};
 pub struct SrvRecord {
     pub entries: Vec<SrvEntry>,
     pub domain: SrvDomain,
+    pub ttl: u32,
 }
 
 /// Simple struct that resembles the SRV record entries

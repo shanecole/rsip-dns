@@ -7,6 +7,7 @@ use std::convert::TryFrom;
 pub struct NaptrRecord {
     pub entries: Vec<NaptrEntry>,
     pub domain: Domain,
+    pub ttl: u32,
 }
 
 /// Simple struct that resembles the NAPTR record entries

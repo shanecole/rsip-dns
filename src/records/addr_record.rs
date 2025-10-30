@@ -6,10 +6,11 @@ use std::net::IpAddr;
 pub struct AddrRecord {
     pub domain: Domain,
     pub ip_addrs: Vec<IpAddr>,
+    pub ttl: u32,
 }
 
 impl From<(Domain, Vec<IpAddr>)> for AddrRecord {
     fn from(tuple: (Domain, Vec<IpAddr>)) -> Self {
-        Self { domain: tuple.0, ip_addrs: tuple.1 }
+        Self { domain: tuple.0, ip_addrs: tuple.1, ttl: 300 }
     }
 }

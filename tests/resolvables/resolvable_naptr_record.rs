@@ -1,6 +1,6 @@
 use once_cell::sync::Lazy;
 use rsip::{Domain, Error, Transport};
-use rsip_dns::{records::*, resolvables::*, DnsClient};
+use rsip_dns::{DnsClient, records::*, resolvables::*};
 use std::convert::TryInto;
 use std::{collections::HashMap, net::IpAddr};
 
@@ -62,7 +62,11 @@ impl DnsClient for CustomMockedDnsClient {
         Some(SRV_RECORD.clone())
     }
     async fn ip_lookup(&self, domain: Domain) -> Result<AddrRecord, Error> {
-        Ok(AddrRecord { ip_addrs: IP_ADDRS.get(&domain.to_string()).unwrap().clone(), domain })
+        Ok(AddrRecord {
+            ip_addrs: IP_ADDRS.get(&domain.to_string()).unwrap().clone(),
+            domain,
+            ttl: 300,
+        })
     }
 }
 
@@ -81,6 +85,7 @@ static NAPTR_RECORD: Lazy<NaptrRecord> = Lazy::new(|| {
             replacement: "_sips._tcp.example.com.".into(),
         }],
         domain: DOMAIN.clone(),
+        ttl: 300,
     }
 });
 
@@ -103,6 +108,7 @@ static SRV_RECORD: Lazy<SrvRecord> = Lazy::new(|| {
             },
         ],
         domain: NAPTR_RECORD.entries.first().unwrap().clone().try_into().unwrap(),
+        ttl: 300,
     }
 });
 

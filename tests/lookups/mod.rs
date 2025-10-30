@@ -11,7 +11,7 @@ macro_rules! assert_lookup {
 }
 
 use rsip::{Domain, Error, Port};
-use rsip_dns::{records::*, DnsClient};
+use rsip_dns::{DnsClient, records::*};
 use std::{collections::HashMap, net::IpAddr};
 
 pub mod domain_with_port;
@@ -82,6 +82,7 @@ fn naptr_records_from_naptr_map(naptr_map: NaptrMap) -> NaptrRecords {
                         regexp: vec![],
                     })
                     .collect::<Vec<NaptrEntry>>(),
+                ttl: 300,
             },
         );
     }
@@ -106,6 +107,7 @@ fn srv_records_from_srv_map(srv_map: SrvMap) -> SrvRecords {
                         target: tuple.3,
                     })
                     .collect::<Vec<SrvEntry>>(),
+                ttl: 300,
             },
         );
     }
@@ -129,7 +131,7 @@ impl DnsClient for CustomDnsClient {
         log::info!("requested A for {}", domain);
 
         match self.a_records.clone().unwrap().get(&domain).cloned() {
-            Some(ip_addrs) => Ok(AddrRecord { domain, ip_addrs }),
+            Some(ip_addrs) => Ok(AddrRecord { domain, ip_addrs, ttl: 300 }),
             None => Err(Error::Unexpected(format!("Could not find anything for {}", domain))),
         }
     }

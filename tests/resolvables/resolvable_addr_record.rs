@@ -1,6 +1,6 @@
 use crate::support::MockedDnsClient;
 use rsip::{Domain, Port, Transport};
-use rsip_dns::{records::*, resolvables::*, Target};
+use rsip_dns::{Target, records::*, resolvables::*};
 
 #[tokio::test]
 async fn resolves_correctly() {
@@ -12,6 +12,7 @@ async fn resolves_correctly() {
         a_record: Some(AddrRecord {
             domain: domain.clone(),
             ip_addrs: vec![Randomize::random(), Randomize::random()],
+            ttl: 300,
         }),
         ..Default::default()
     };

@@ -1,6 +1,6 @@
 [package]
 name = "rsip-dns"
-version = "0.1.4"
+version = "0.2.0"
 authors = ["Filippos Vasilakis <vasilakisfil@gmail.com>"]
 edition = "2024"
 description = "SIP Rust library implementing RFC 3263, implemented on top of rsip"
@@ -9,6 +9,8 @@ documentation = "https://docs.rs/rsip-dns"
 keywords = ["sip", "3263", "dns", "voip", "srv"]
 categories = ["parser-implementations", "parsing", "network-programming"]
 license-file = "LICENSE"
+
+[workspace]
 
 [dependencies]
 rsip = { version = "0.4.0" }

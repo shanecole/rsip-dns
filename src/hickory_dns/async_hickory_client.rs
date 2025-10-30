@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use std::{convert::TryInto, net::IpAddr};
 
-use crate::{records::*, DnsClient, SrvDomain};
+use crate::{DnsClient, SrvDomain, records::*};
 use hickory_proto::rr::record_type::RecordType;
 use hickory_resolver::TokioResolver;
 
@@ -24,19 +24,28 @@ impl AsyncHickoryClient {
 #[async_trait]
 impl DnsClient for AsyncHickoryClient {
     async fn naptr_lookup(&self, domain: Domain) -> Option<NaptrRecord> {
-        self.resolver.lookup(domain.to_string(), RecordType::NAPTR).await.ok().map(|r| {
-            let entries = r
+        self.resolver.lookup(domain.to_string(), RecordType::NAPTR).await.ok().map(|lookup| {
+            // Extract minimum TTL from all records (standard practice for RRsets)
+            let ttl = lookup.record_iter().map(|record| record.ttl()).min().unwrap_or(300);
+
+            let entries = lookup
                 .into_iter()
                 .filter_map(|rdata| rdata.try_into().ok())
                 .collect::<Vec<NaptrEntry>>();
-            NaptrRecord { domain, entries }
+
+            NaptrRecord { domain, entries, ttl }
         })
     }
 
     async fn srv_lookup(&self, domain: SrvDomain) -> Option<SrvRecord> {
-        self.resolver.srv_lookup(domain.to_string()).await.ok().map(|r| {
-            let entries = r.into_iter().map(Into::into).collect::<Vec<SrvEntry>>();
-            SrvRecord { domain, entries }
+        self.resolver.srv_lookup(domain.to_string()).await.ok().map(|lookup| {
+            // TODO: SrvLookup doesn't expose underlying records for TTL extraction
+            // Using default TTL until hickory-dns provides access to record metadata
+            let ttl = 300u32;
+
+            let entries = lookup.into_iter().map(Into::into).collect::<Vec<SrvEntry>>();
+
+            SrvRecord { domain, entries, ttl }
         })
     }
 
@@ -44,9 +53,14 @@ impl DnsClient for AsyncHickoryClient {
         self.resolver
             .lookup_ip(domain.to_string())
             .await
-            .map(|r| {
-                let ip_addrs = r.into_iter().collect::<Vec<IpAddr>>();
-                AddrRecord { domain, ip_addrs }
+            .map(|lookup| {
+                // TODO: LookupIp doesn't expose underlying records for TTL extraction
+                // Using default TTL until hickory-dns provides access to record metadata
+                let ttl = 300u32;
+
+                let ip_addrs = lookup.into_iter().collect::<Vec<IpAddr>>();
+
+                AddrRecord { domain, ip_addrs, ttl }
             })
             .map_err(|e| Error::Unexpected(e.to_string()))
     }
