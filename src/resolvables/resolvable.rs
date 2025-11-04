@@ -57,10 +57,12 @@ where
 }
 
 #[derive(Debug, Clone)]
+#[derive(Default)]
 enum ResolvableInner<T>
 where
     T: ResolvableItem,
 {
+    #[default]
     Unset,
     Empty,
     NonEmpty(VecDeque<T>),
@@ -96,14 +98,6 @@ where
     }
 }
 
-impl<T> Default for ResolvableInner<T>
-where
-    T: ResolvableItem,
-{
-    fn default() -> Self {
-        Self::Unset
-    }
-}
 
 impl<T> From<Vec<T>> for ResolvableInner<T>
 where
