@@ -1,7 +1,10 @@
-use crate::{records::SrvDomain, resolvables::*, Context, DnsClient, Target};
+use crate::{Context, DnsClient, Target, records::SrvDomain, resolvables::*};
 use async_trait::async_trait;
 use rsip::{Domain, Host, Port, Transport};
 use std::net::IpAddr;
+
+mod just_domain_lookup;
+use just_domain_lookup::JustDomainLookup;
 
 #[derive(Debug, Clone)]
 pub enum Lookup<C>
@@ -14,7 +17,7 @@ where
     //add an exhaustive variant that apart from the given transport, tries AddrRecords for the given
     //available transports.
     DomainWithTransport(ResolvableVec<ResolvableEnum<C>, Target>),
-    JustDomain(ResolvableVec<ResolvableEnum<C>, Target>),
+    JustDomain(JustDomainLookup<C>),
 }
 
 #[async_trait]
@@ -98,39 +101,8 @@ fn domain_with_transport_lookup<C: DnsClient>(
     Lookup::DomainWithTransport(ResolvableVec::non_empty(lookups))
 }
 
-fn just_domain_lookup<C: DnsClient>(domain: Domain, ctx: Context<C>) -> Lookup<C> {
-    let mut lookups: Vec<ResolvableEnum<C>> = vec![ResolvableNaptrRecord::new(
-        ctx.dns_client.clone(),
-        domain.clone(),
-        ctx.available_transports(),
-    )
-    .into()];
-
-    ctx.available_protocols().into_iter().for_each(|transport| {
-        let srv_domain = SrvDomain {
-            secure: ctx.secure,
-            protocol: transport.protocol(),
-            domain: domain.clone(),
-        };
-
-        lookups.push(ResolvableSrvRecord::new(ctx.dns_client.clone(), srv_domain).into());
-    });
-
-    let default_transport = match ctx.secure {
-        true => Transport::default_secure_transport(),
-        false => Transport::default_insecure_transport(),
-    };
-    lookups.push(
-        ResolvableAddrRecord::new(
-            ctx.dns_client,
-            domain,
-            default_transport.default_port(),
-            default_transport,
-        )
-        .into(),
-    );
-
-    Lookup::JustDomain(ResolvableVec::non_empty(lookups))
+fn just_domain_lookup<C: DnsClient>(_domain: Domain, ctx: Context<C>) -> Lookup<C> {
+    Lookup::JustDomain(JustDomainLookup::new(ctx))
 }
 
 /*

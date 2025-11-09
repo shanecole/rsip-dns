@@ -1,13 +1,18 @@
+use super::{SrvDomain, SrvRecord};
 use rsip::{Domain, Error, Transport};
+use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::convert::TryFrom;
 
-/// Simple struct that holds the NAPTR record details (domain and srv entries)
+/// Simple struct that holds the NAPTR record details (domain and naptr entries)
 #[derive(Debug, Clone)]
 pub struct NaptrRecord {
     pub entries: Vec<NaptrEntry>,
     pub domain: Domain,
     pub ttl: u32,
+    /// Additional SRV records returned in the DNS ADDITIONAL section.
+    /// This enables single-query resolution when DNS server supports recursion.
+    pub additional_srvs: HashMap<SrvDomain, SrvRecord>,
 }
 
 /// Simple struct that resembles the NAPTR record entries
@@ -78,6 +83,38 @@ impl From<NaptrRecord> for VecDeque<NaptrEntry> {
 }
 
 impl NaptrRecord {
+    /// Create a new NaptrRecord without additional SRV records (backward compatible)
+    pub fn new(entries: Vec<NaptrEntry>, domain: Domain, ttl: u32) -> Self {
+        Self { entries, domain, ttl, additional_srvs: HashMap::new() }
+    }
+
+    /// Create a new NaptrRecord with additional SRV records from DNS ADDITIONAL section
+    pub fn with_additional_srvs(
+        entries: Vec<NaptrEntry>,
+        domain: Domain,
+        ttl: u32,
+        additional_srvs: HashMap<SrvDomain, SrvRecord>,
+    ) -> Self {
+        Self { entries, domain, ttl, additional_srvs }
+    }
+
+    /// Get additional SRV record for a specific NAPTR replacement domain
+    pub fn get_additional_srv(&self, srv_domain: &SrvDomain) -> Option<&SrvRecord> {
+        self.additional_srvs.get(srv_domain)
+    }
+
+    /// Check if all NAPTR entries have corresponding additional SRV records
+    pub fn has_complete_additional_srvs(&self) -> bool {
+        self.entries.iter().all(|entry| {
+            // Try to convert replacement to SrvDomain and check if it exists
+            if let Ok(srv_domain) = SrvDomain::try_from(entry.replacement.to_string().as_str()) {
+                self.additional_srvs.contains_key(&srv_domain)
+            } else {
+                false
+            }
+        })
+    }
+
     pub fn as_slice(&self) -> &[NaptrEntry] {
         self.entries.as_slice()
     }

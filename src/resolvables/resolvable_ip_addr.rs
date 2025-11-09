@@ -11,6 +11,7 @@ pub struct ResolvableIpAddr {
     ip_addr: Resolvable<IpAddr>,
     port: Port,
     transport: Transport,
+    ttl: u32,
 }
 
 #[async_trait]
@@ -24,13 +25,18 @@ impl ResolvableExt<Target> for ResolvableIpAddr {
             ip_addr,
             port: self.port,
             transport: self.transport,
+            ttl: self.ttl,
         })
     }
 }
 
 impl ResolvableIpAddr {
     pub fn new(ip_addr: IpAddr, port: Port, transport: Transport) -> Self {
-        Self { ip_addr: Resolvable::non_empty(vec![ip_addr]), port, transport }
+        Self { ip_addr: Resolvable::non_empty(vec![ip_addr]), port, transport, ttl: 300 }
+    }
+
+    pub fn new_with_ttl(ip_addr: IpAddr, port: Port, transport: Transport, ttl: u32) -> Self {
+        Self { ip_addr: Resolvable::non_empty(vec![ip_addr]), port, transport, ttl }
     }
 }
 

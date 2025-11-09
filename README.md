@@ -7,6 +7,18 @@
 
 SIP Rust library implementing [RFC 3263](https://datatracker.ietf.org/doc/html/rfc3263), implemented on top of rsip
 
+## Fork Differences
+
+This fork adds significant enhancements for single-query DNS resolution:
+
+- **RecursiveHickoryClient**: New DNS client using `hickory-proto` directly to access the ADDITIONAL section of DNS responses, enabling retrieval of NAPTR + SRV + A/AAAA records in a single query
+- **Extended Record Types**: `NaptrRecord` now includes `additional_srvs` field, and `SrvRecord` includes `additional_hosts` field to cache records returned in the ADDITIONAL section
+- **TTL Tracking**: Full TTL exposure across all DNS record types (NAPTR, SRV, A/AAAA) for accurate application-level caching
+- **Helper Methods**: Added `has_complete_additional_srvs()`, `get_additional_srv()`, `additional_coverage()` and related methods
+- **No Internal Caching**: RecursiveHickoryClient is stateless with no internal caching - all caching must be implemented at the application layer
+
+These changes enable dramatic query reduction when DNS servers support recursive responses with ADDITIONAL sections.
+
 ## Intro
 This library implements all the necessary DNS procedures defined in
 [RFC3263](https://datatracker.ietf.org/doc/html/rfc3263) that allow a client or a server to

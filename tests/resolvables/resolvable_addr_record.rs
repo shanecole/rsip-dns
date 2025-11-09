@@ -27,7 +27,8 @@ async fn resolves_correctly() {
         dns_client.a_record.clone().unwrap().ip_addrs.first().map(|ip_addr| Target {
             ip_addr: *ip_addr,
             port,
-            transport
+            transport,
+            ttl: 300
         })
     );
     assert_eq!(
@@ -35,7 +36,8 @@ async fn resolves_correctly() {
         dns_client.a_record.clone().unwrap().ip_addrs.last().map(|ip_addr| Target {
             ip_addr: *ip_addr,
             port,
-            transport
+            transport,
+            ttl: 300
         })
     );
     assert!(resolvable.resolve_next().await.is_none());

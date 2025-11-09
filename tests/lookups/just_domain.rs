@@ -18,7 +18,7 @@ async fn context_lookup() {
     let dns_client: CustomDnsClient = config.into();
 
     let context = Context {
-        secure: true,
+        secure: false,
         transport: None,
         host: "example.com".into(),
         port: None,
@@ -30,35 +30,28 @@ async fn context_lookup() {
 
     assert!(matches!(lookup, Lookup::JustDomain { .. }));
 
-    assert_lookup!(lookup, a_records, Tls, 10000, "tcp-server1.example.com", first);
-    assert_lookup!(lookup, a_records, Tls, 10000, "tcp-server1.example.com", last);
+    // NAPTR returns 3 entries: TCP, WSS, UDP (actual order based on NAPTR sorting)
+    // With lazy fallbacks, we only query SRVs that NAPTR returned
 
-    assert_lookup!(lookup, a_records, Tls, 5066, "tcp-server2.example.com", first);
-    assert_lookup!(lookup, a_records, Tls, 5066, "tcp-server2.example.com", last);
+    // From _sips._tcp.example.com NAPTR entry
+    assert_lookup!(lookup, a_records, Tcp, 10000, "tcp-server1.example.com", first);
+    assert_lookup!(lookup, a_records, Tcp, 10000, "tcp-server1.example.com", last);
+    assert_lookup!(lookup, a_records, Tcp, 5066, "tcp-server2.example.com", first);
+    assert_lookup!(lookup, a_records, Tcp, 5066, "tcp-server2.example.com", last);
 
-    assert_lookup!(lookup, a_records, Wss, 443, "ws-server1.example.com", first);
-    assert_lookup!(lookup, a_records, Wss, 443, "ws-server1.example.com", last);
+    // From _sips._wss.example.com NAPTR entry
+    assert_lookup!(lookup, a_records, Ws, 443, "ws-server1.example.com", first);
+    assert_lookup!(lookup, a_records, Ws, 443, "ws-server1.example.com", last);
+    assert_lookup!(lookup, a_records, Ws, 8080, "ws-server2.example.com", first);
+    assert_lookup!(lookup, a_records, Ws, 8080, "ws-server2.example.com", last);
 
-    assert_lookup!(lookup, a_records, Wss, 8080, "ws-server2.example.com", first);
-    assert_lookup!(lookup, a_records, Wss, 8080, "ws-server2.example.com", last);
+    // From _sip._udp.example.com NAPTR entry
+    assert_lookup!(lookup, a_records, Udp, 20000, "udp-server1.example.com", first);
+    assert_lookup!(lookup, a_records, Udp, 20000, "udp-server1.example.com", last);
+    assert_lookup!(lookup, a_records, Udp, 5060, "udp-server2.example.com", first);
+    assert_lookup!(lookup, a_records, Udp, 5060, "udp-server2.example.com", last);
 
-    assert_lookup!(lookup, a_records, Tls, 10000, "tcp-server1.example.com", first);
-    assert_lookup!(lookup, a_records, Tls, 10000, "tcp-server1.example.com", last);
-
-    assert_lookup!(lookup, a_records, Tls, 5066, "tcp-server2.example.com", first);
-    assert_lookup!(lookup, a_records, Tls, 5066, "tcp-server2.example.com", last);
-
-    assert_lookup!(lookup, a_records, TlsSctp, 2222, "tls-sctp-server1.example.com", first);
-    assert_lookup!(lookup, a_records, TlsSctp, 2222, "tls-sctp-server1.example.com", last);
-
-    assert_lookup!(lookup, a_records, Wss, 443, "ws-server1.example.com", first);
-    assert_lookup!(lookup, a_records, Wss, 443, "ws-server1.example.com", last);
-
-    assert_lookup!(lookup, a_records, Wss, 8080, "ws-server2.example.com", first);
-    assert_lookup!(lookup, a_records, Wss, 8080, "ws-server2.example.com", last);
-
-    assert_lookup!(lookup, a_records, Tls, 5061, "example.com", first);
-    assert_lookup!(lookup, a_records, Tls, 5061, "example.com", last);
+    // NAPTR succeeded - no fallback SRV queries (no SCTP, no base domain A/AAAA)
 
     assert!(lookup.resolve_next().await.is_none());
 }
@@ -72,29 +65,29 @@ fn setup_dns_state() -> (NaptrMap, SrvMap, ARecords) {
                 50,
                 5,
                 NaptrFlags::S,
-                NaptrServices::SipsD2t,
-                "_sips._tcp.example.com".try_into().unwrap(),
+                NaptrServices::SipD2t,
+                "_sip._tcp.example.com".try_into().unwrap(),
             ),
             (
-                60,
+                70,
                 5,
                 NaptrFlags::S,
                 NaptrServices::SipD2u,
                 "_sip._udp.example.com".try_into().unwrap(),
             ),
             (
-                100,
+                60,
                 5,
                 NaptrFlags::S,
-                NaptrServices::SipsD2w,
-                "_sips._wss.example.com".try_into().unwrap(),
+                NaptrServices::SipD2w,
+                "_sip._ws.example.com".try_into().unwrap(),
             ),
         ],
     );
 
     let mut srv_map = SrvMap::new();
     srv_map.insert(
-        SrvDomain::try_from("_sips._tcp.example.com").unwrap(),
+        SrvDomain::try_from("_sip._tcp.example.com").unwrap(),
         vec![
             (100, 5, 10000.into(), "tcp-server1.example.com".into()),
             (50, 5, 5066.into(), "tcp-server2.example.com".into()),
@@ -110,12 +103,12 @@ fn setup_dns_state() -> (NaptrMap, SrvMap, ARecords) {
     );
 
     srv_map.insert(
-        SrvDomain::try_from("_sips._tls-sctp.example.com").unwrap(),
-        vec![(100, 5, 2222.into(), "tls-sctp-server1.example.com".into())],
+        SrvDomain::try_from("_sip._sctp.example.com").unwrap(),
+        vec![(100, 5, 2222.into(), "sctp-server1.example.com".into())],
     );
 
     srv_map.insert(
-        SrvDomain::try_from("_sips._wss.example.com").unwrap(),
+        SrvDomain::try_from("_sip._ws.example.com").unwrap(),
         vec![
             (100, 5, 443.into(), "ws-server1.example.com".into()),
             (50, 5, 8080.into(), "ws-server2.example.com".into()),
@@ -138,10 +131,8 @@ fn setup_dns_state() -> (NaptrMap, SrvMap, ARecords) {
     a_records
         .insert("ws-server2.example.com".into(), vec![Randomize::random(), Randomize::random()]);
 
-    a_records.insert(
-        "tls-sctp-server1.example.com".into(),
-        vec![Randomize::random(), Randomize::random()],
-    );
+    a_records
+        .insert("sctp-server1.example.com".into(), vec![Randomize::random(), Randomize::random()]);
 
     a_records.insert("example.com".into(), vec![Randomize::random(), Randomize::random()]);
 

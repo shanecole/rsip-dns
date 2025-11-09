@@ -1,5 +1,6 @@
-use super::SrvDomain;
+use super::{AddrRecord, SrvDomain};
 use rsip::{Domain, Port, Transport};
+use std::collections::HashMap;
 
 /// Simple struct that holds the SRV record details (domain and srv entries)
 #[derive(Debug, Clone)]
@@ -7,6 +8,9 @@ pub struct SrvRecord {
     pub entries: Vec<SrvEntry>,
     pub domain: SrvDomain,
     pub ttl: u32,
+    /// Additional A/AAAA records returned in the DNS ADDITIONAL section.
+    /// This enables single-query resolution when DNS server supports recursion.
+    pub additional_hosts: HashMap<Domain, AddrRecord>,
 }
 
 /// Simple struct that resembles the SRV record entries
@@ -19,6 +23,44 @@ pub struct SrvEntry {
 }
 
 impl SrvRecord {
+    /// Create a new SrvRecord without additional hosts (backward compatible)
+    pub fn new(entries: Vec<SrvEntry>, domain: SrvDomain, ttl: u32) -> Self {
+        Self { entries, domain, ttl, additional_hosts: HashMap::new() }
+    }
+
+    /// Create a new SrvRecord with additional hosts from DNS ADDITIONAL section
+    pub fn with_additional_hosts(
+        entries: Vec<SrvEntry>,
+        domain: SrvDomain,
+        ttl: u32,
+        additional_hosts: HashMap<Domain, AddrRecord>,
+    ) -> Self {
+        Self { entries, domain, ttl, additional_hosts }
+    }
+
+    /// Get additional AddrRecord for a specific target domain
+    pub fn get_additional_for_target(&self, target: &Domain) -> Option<&AddrRecord> {
+        self.additional_hosts.get(target)
+    }
+
+    /// Check if all SRV targets have corresponding additional records
+    pub fn has_complete_additionals(&self) -> bool {
+        self.entries.iter().all(|entry| self.additional_hosts.contains_key(&entry.target))
+    }
+
+    /// Get coverage ratio of additional records (0.0 to 1.0)
+    pub fn additional_coverage(&self) -> f64 {
+        if self.entries.is_empty() {
+            return 1.0;
+        }
+        let covered = self
+            .entries
+            .iter()
+            .filter(|entry| self.additional_hosts.contains_key(&entry.target))
+            .count();
+        covered as f64 / self.entries.len() as f64
+    }
+
     pub fn targets(&self) -> Vec<Domain> {
         self.entries.iter().map(|s| s.target.clone()).collect::<Vec<Domain>>()
     }

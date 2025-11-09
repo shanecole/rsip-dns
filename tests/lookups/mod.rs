@@ -1,8 +1,9 @@
 macro_rules! assert_lookup {
     ($lookup:expr, $a_records:expr, $transport:ident, $port:expr, $a_domain:expr, $index:ident) => {
-        let Target { ip_addr, port, transport } = $lookup.resolve_next().await.unwrap();
+        let Target { ip_addr, port, transport, ttl } = $lookup.resolve_next().await.unwrap();
         assert_eq!(transport, $transport);
         assert_eq!(port, $port.into());
+        assert_eq!(ttl, 300); // Default TTL from test DNS client
         assert_eq!(
             ip_addr,
             $a_records.get(&Domain::from($a_domain)).cloned().unwrap().$index().unwrap().clone()
@@ -18,6 +19,7 @@ pub mod domain_with_port;
 pub mod domain_with_transport;
 pub mod ip_addr;
 pub mod just_domain;
+pub mod ttl_tracking;
 
 #[derive(Clone, Default)]
 pub struct CustomDnsClient {
@@ -71,18 +73,24 @@ fn naptr_records_from_naptr_map(naptr_map: NaptrMap) -> NaptrRecords {
             domain.clone(),
             NaptrRecord {
                 domain,
-                entries: domains
-                    .into_iter()
-                    .map(|tuple| NaptrEntry {
-                        order: tuple.0,
-                        preference: tuple.1,
-                        flags: tuple.2,
-                        services: tuple.3,
-                        replacement: tuple.4.to_string().into(),
-                        regexp: vec![],
-                    })
-                    .collect::<Vec<NaptrEntry>>(),
+                entries: {
+                    let mut entries: Vec<NaptrEntry> = domains
+                        .into_iter()
+                        .map(|tuple| NaptrEntry {
+                            order: tuple.0,
+                            preference: tuple.1,
+                            flags: tuple.2,
+                            services: tuple.3,
+                            replacement: tuple.4.to_string().into(),
+                            regexp: vec![],
+                        })
+                        .collect();
+                    // Sort by order (ascending), then preference (ascending) per RFC 2915/3403
+                    entries.sort_by_key(|e| (e.order, e.preference));
+                    entries
+                },
                 ttl: 300,
+                additional_srvs: HashMap::new(),
             },
         );
     }
@@ -96,9 +104,8 @@ fn srv_records_from_srv_map(srv_map: SrvMap) -> SrvRecords {
     for (srv_domain, domains) in srv_map {
         srv_records.insert(
             srv_domain.clone(),
-            SrvRecord {
-                domain: srv_domain,
-                entries: domains
+            SrvRecord::new(
+                domains
                     .into_iter()
                     .map(|tuple| SrvEntry {
                         priority: tuple.0,
@@ -107,8 +114,9 @@ fn srv_records_from_srv_map(srv_map: SrvMap) -> SrvRecords {
                         target: tuple.3,
                     })
                     .collect::<Vec<SrvEntry>>(),
-                ttl: 300,
-            },
+                srv_domain,
+                300,
+            ),
         );
     }
 

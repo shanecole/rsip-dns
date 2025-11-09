@@ -16,10 +16,11 @@ async fn context_lookup() {
     );
     assert!(matches!(lookup, Lookup::IpAddr { .. }));
 
-    let Target { ip_addr, port, transport } = lookup.resolve_next().await.unwrap();
+    let Target { ip_addr, port, transport, ttl } = lookup.resolve_next().await.unwrap();
     assert_eq!(ip_addr, host_ip_addr);
     assert_eq!(port, 5060.into());
     assert_eq!(transport, rsip::Transport::Udp);
+    assert_eq!(ttl, 300); // Default TTL for IP address targets
 
     assert!(lookup.resolve_next().await.is_none());
 }

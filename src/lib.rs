@@ -138,8 +138,8 @@
 //!         Some(Target {
 //!             ip_addr,
 //!             port,
-//!             transport,
-//!         }) => println!("next tuple: ({:?}, {:?}, {:?})", ip_addr, port, transport),
+//!             transport, ttl,
+//!         }) => println!("next tuple: ({:?}, {:?}, {:?}, {:?})", ip_addr, port, transport, ttl),
 //!         None => break,
 //!     }
 //! }
@@ -228,6 +228,8 @@ mod hickory_dns;
 pub use hickory_dns::AsyncHickoryClient;
 #[cfg(feature = "hickory-dns")]
 pub use hickory_dns::HickoryClient;
+#[cfg(feature = "hickory-dns")]
+pub use hickory_dns::RecursiveHickoryClient;
 #[cfg(feature = "hickory-dns")]
 pub use hickory_proto;
 #[cfg(feature = "hickory-dns")]

@@ -12,9 +12,11 @@
 
 mod async_hickory_client;
 mod hickory_client;
+mod recursive_client;
 
 pub use async_hickory_client::AsyncHickoryClient;
 pub use hickory_client::HickoryClient;
+pub use recursive_client::RecursiveHickoryClient;
 
 use std::convert::{TryFrom, TryInto};
 

@@ -1,6 +1,6 @@
 use crate::{
-    resolvables::{ResolvableExt, ResolvableIpAddr, ResolvableState, ResolvableVec},
     DnsClient, Target,
+    resolvables::{ResolvableExt, ResolvableIpAddr, ResolvableState, ResolvableVec},
 };
 use async_trait::async_trait;
 use rsip::{Domain, Port, Transport};
@@ -43,13 +43,34 @@ where
         Self { dns_client, domain, port, transport, resolvable_ip_addrs: Default::default() }
     }
 
+    /// Create a ResolvableAddrRecord from a pre-resolved ResolvableIpAddr.
+    /// This is used when we have IP addresses from the DNS ADDITIONAL section.
+    pub fn from_resolvable_ip(
+        dns_client: C,
+        domain: Domain,
+        port: Port,
+        transport: Transport,
+        resolvable_ip: ResolvableIpAddr,
+    ) -> Self {
+        Self {
+            dns_client,
+            domain,
+            port,
+            transport,
+            resolvable_ip_addrs: ResolvableVec::non_empty(vec![resolvable_ip]),
+        }
+    }
+
     async fn resolve_domain(&mut self) {
         match self.dns_client.ip_lookup(self.domain.clone()).await {
             Ok(a_record) => {
+                let ttl = a_record.ttl;
                 let resolvable_ip_addrs = a_record
                     .ip_addrs
                     .into_iter()
-                    .map(|ip_addr| ResolvableIpAddr::new(ip_addr, self.port, self.transport))
+                    .map(|ip_addr| {
+                        ResolvableIpAddr::new_with_ttl(ip_addr, self.port, self.transport, ttl)
+                    })
                     .collect::<Vec<_>>();
                 self.resolvable_ip_addrs = ResolvableVec::non_empty(resolvable_ip_addrs)
             }

@@ -1,7 +1,7 @@
 use crate::{
+    DnsClient, Target,
     records::NaptrFlags,
     resolvables::{ResolvableExt, ResolvableSrvRecord, ResolvableState, ResolvableVec},
-    DnsClient, Target,
 };
 use async_trait::async_trait;
 use rsip::{Domain, Transport};
@@ -61,15 +61,35 @@ where
             }
         };
 
+        // Check if we have cached SRV records from ADDITIONAL section
+        let has_additional_srvs = !naptr_record.additional_srvs.is_empty();
+
         let resolvable_srv_records = naptr_record
-            .into_iter()
+            .iter()
             .filter(|s| match s.services.transport() {
                 Some(transport) => self.available_transports.contains(&transport),
                 None => false,
             })
             .filter(|s| matches!(s.flags, NaptrFlags::S))
-            .filter_map(|e| TryInto::<SrvDomain>::try_into(e).ok())
-            .map(|srv_domain| ResolvableSrvRecord::new(self.dns_client.clone(), srv_domain))
+            .filter_map(|e| {
+                if let Ok(srv_domain) = TryInto::<SrvDomain>::try_into(e.clone()) {
+                    // Check if we have this SRV in additional section
+                    if has_additional_srvs
+                        && let Some(srv_record) = naptr_record.get_additional_srv(&srv_domain)
+                    {
+                        // Use cached SRV record - it already has additional_hosts populated
+                        // Create ResolvableSrvRecord with pre-fetched data
+                        return Some(ResolvableSrvRecord::from_srv_record(
+                            self.dns_client.clone(),
+                            srv_record.clone(),
+                        ));
+                    }
+                    // No cached SRV, create one that will query DNS
+                    Some(ResolvableSrvRecord::new(self.dns_client.clone(), srv_domain))
+                } else {
+                    None
+                }
+            })
             .collect::<Vec<ResolvableSrvRecord<C>>>();
 
         self.resolvable_srv_records = ResolvableVec::non_empty(resolvable_srv_records)
